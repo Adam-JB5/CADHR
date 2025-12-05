@@ -30,7 +30,7 @@ public class CADHR {
         try {
 
             Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
+            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@192.168.1.209:1521:test", "HR", "kk");
             Statement sentencia = conexion.createStatement();
             dml = "DELETE REGIONS WHERE region_id = " + regionId;
             registrosAfectados = sentencia.executeUpdate(dml);
@@ -83,7 +83,7 @@ public class CADHR {
         try {
 
             Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
+            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.1.209:1521:test", "HR", "kk");
             Statement sentencia = conexion.createStatement();
             String dml = "DELETE FROM countries WHERE country_id = " + countryId;
             registrosAfectados = sentencia.executeUpdate(dml);
@@ -101,18 +101,21 @@ public class CADHR {
     
     public Integer modificarDepartment(Integer departmentId, Department department) throws ExcepcionHR{
         int registrosAfectados = 0;
-        String dml = "UPDATE department set department_name=?, manager_id=?";
+        String dml = "UPDATE departments SET department_name=?, manager_id=?, location_id=? WHERE department_id=?";
         try {
 
             Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
+            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@192.168.1.209:1521:test", "HR", "kk");
            
             PreparedStatement sentenciaPreparada = conexion.prepareStatement(dml);
 
             
             sentenciaPreparada.setString(1, department.getDepartmentName());
-            sentenciaPreparada.setInt(2, 2);
-            registrosAfectados = sentenciaPreparada.executeUpdate(dml);
+            sentenciaPreparada.setInt(2, department.getManager().getEmployeeId());
+            sentenciaPreparada.setInt(3, department.getLocation().getLocationId());
+            sentenciaPreparada.setInt(4, departmentId);
+            registrosAfectados = sentenciaPreparada.executeUpdate();
+            
             sentenciaPreparada.close();
             conexion.close();
             
@@ -127,8 +130,8 @@ public class CADHR {
             ExcepcionHR e = new ExcepcionHR();
             
             switch (ex.getErrorCode()) {
-                case 2292:
-                    e.setMensajeErrorUsuario("No se puede eliminar la región porque tiene países asociados");
+                case 2291:
+                    e.setMensajeErrorUsuario("No se ha podido modificar debido a que el empleado o localización no existen");
                     break;
                 default:
                     e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");

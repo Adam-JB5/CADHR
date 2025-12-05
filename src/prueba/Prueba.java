@@ -9,6 +9,7 @@ import cadhr.CADHR;
 import cadhr.ExcepcionHR;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import pojoshr.*;
 
 /**
  *
@@ -21,7 +22,18 @@ public class Prueba {
 
         int registrosAfectados = 0;
         try {
-            registrosAfectados = cad.eliminarRegion(2);
+            Department dep = new Department();
+            Location loc = new Location();
+            Employee man = new Employee();
+            
+            man.setEmployeeId(100);
+            loc.setLocationId(2);
+            
+            dep.setDepartmentName("kk");
+            dep.setLocation(loc);
+            dep.setManager(man);
+            
+            registrosAfectados = cad.modificarDepartment(20, dep);
             System.out.println("Registros eliminados: " + registrosAfectados);
         } catch (ExcepcionHR ex) {
             System.out.println(ex);
