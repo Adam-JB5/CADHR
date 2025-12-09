@@ -8,6 +8,7 @@ package cadhr;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -19,11 +20,10 @@ import pojoshr.*;
  */
 public class CADHR {
 
-    
     public Integer insertarRegion(Region region) {
         return null;
     }
-    
+
     public Integer eliminarRegion(Integer regionId) throws ExcepcionHR {
         int registrosAfectados = 0;
         String dml = "";
@@ -36,17 +36,17 @@ public class CADHR {
             registrosAfectados = sentencia.executeUpdate(dml);
             sentencia.close();
             conexion.close();
-            
+
         } catch (ClassNotFoundException ex) {
             ExcepcionHR e = new ExcepcionHR();
             e.setMensajeErrorBD(ex.getMessage());
             e.setSentenciaSQL(dml);
-            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");           
+            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
             throw e;
         } catch (SQLException ex) {
-            
+
             ExcepcionHR e = new ExcepcionHR();
-            
+
             switch (ex.getErrorCode()) {
                 case 2292:
                     e.setMensajeErrorUsuario("No se puede eliminar la región porque tiene países asociados");
@@ -55,29 +55,29 @@ public class CADHR {
                     e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
                     break;
             }
-            
+
             e.setCodigoErrorBD(ex.getErrorCode());
             e.setMensajeErrorBD(ex.getMessage());
             e.setSentenciaSQL(dml);
-            
+
             throw e;
         }
-        
+
         return registrosAfectados;
     }
-    
+
     public Integer modificarRegion(Integer regionId, Region region) {
         return null;
     }
-    
+
     public Region leerRegion(Integer regionId) {
         return null;
     }
-    
+
     public ArrayList<Region> leerRegions() {
         return null;
     }
-    
+
     public Integer eliminarCountry(String countryId) {
         int registrosAfectados = 0;
         try {
@@ -89,47 +89,49 @@ public class CADHR {
             registrosAfectados = sentencia.executeUpdate(dml);
             sentencia.close();
             conexion.close();
-            
+
         } catch (ClassNotFoundException ex) {
             System.out.println("Error - Clase no Encontrada: " + ex.getMessage());
         } catch (SQLException ex) {
             System.out.println("Error SQL: " + ex.getErrorCode() + " - " + ex.getMessage());
         }
-        
+
         return registrosAfectados;
     }
-    
-    public Integer modificarDepartment(Integer departmentId, Department department) throws ExcepcionHR{
+
+    public Integer modificarDepartment(Integer departmentId, Department department) throws ExcepcionHR {
         int registrosAfectados = 0;
         String dml = "UPDATE departments SET department_name=?, manager_id=?, location_id=? WHERE department_id=?";
         try {
 
             Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@192.168.1.209:1521:test", "HR", "kk");
-           
+            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
+
             PreparedStatement sentenciaPreparada = conexion.prepareStatement(dml);
 
-            
             sentenciaPreparada.setString(1, department.getDepartmentName());
             sentenciaPreparada.setInt(2, department.getManager().getEmployeeId());
             sentenciaPreparada.setInt(3, department.getLocation().getLocationId());
             sentenciaPreparada.setInt(4, departmentId);
             registrosAfectados = sentenciaPreparada.executeUpdate();
-            
+
             sentenciaPreparada.close();
             conexion.close();
-            
+
         } catch (ClassNotFoundException ex) {
             ExcepcionHR e = new ExcepcionHR();
             e.setMensajeErrorBD(ex.getMessage());
             e.setSentenciaSQL(dml);
-            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");           
+            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
             throw e;
         } catch (SQLException ex) {
-            
+
             ExcepcionHR e = new ExcepcionHR();
-            
+
             switch (ex.getErrorCode()) {
+                case 1407:
+                    e.setMensajeErrorUsuario("El nombre de departamento es obligatorio");
+                    break;
                 case 2291:
                     e.setMensajeErrorUsuario("No se ha podido modificar debido a que el empleado o localización no existen");
                     break;
@@ -137,15 +139,71 @@ public class CADHR {
                     e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
                     break;
             }
-            
+
             e.setCodigoErrorBD(ex.getErrorCode());
             e.setMensajeErrorBD(ex.getMessage());
             e.setSentenciaSQL(dml);
-            
+
             throw e;
         }
-        
+
         return registrosAfectados;
     }
-    
+
+    public ArrayList<Location> leerLocations() throws ExcepcionHR {
+        ArrayList listaLocations = new ArrayList();
+        Location l;
+        Country c;
+        Region r;
+        String dql = "SELECT * FROM regions r, countries c, locations l WHERE r.region_id = c.region_id and c.country_id = l.country_id";
+        try {
+
+            System.out.println("Conexion");
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
+
+            Statement sentencia = conexion.createStatement();
+
+            ResultSet resultado = sentencia.executeQuery(dql);
+            while (resultado.next()) {
+                l = new Location();
+                l.setLocationId(resultado.getInt("location_id"));
+                l.setStreetAdress(resultado.getString("street_address"));
+                l.setPostalCode(resultado.getString("postal_code"));
+                l.setCity(resultado.getString("city"));
+                l.setStateProvince(resultado.getString("state_province"));
+
+                c = new Country();
+                c.setCountryId(resultado.getString("country_id"));
+                c.setCountryName(resultado.getString("country_name"));
+
+                l.setCountry(c);
+
+                listaLocations.add(l);
+            }
+            resultado.close();
+
+            sentencia.close();
+            conexion.close();
+
+        } catch (ClassNotFoundException ex) {
+            ExcepcionHR e = new ExcepcionHR();
+            e.setMensajeErrorBD(ex.getMessage());
+            e.setSentenciaSQL(dql);
+            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
+            throw e;
+        } catch (SQLException ex) {
+
+            ExcepcionHR e = new ExcepcionHR();
+
+            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
+            e.setCodigoErrorBD(ex.getErrorCode());
+            e.setMensajeErrorBD(ex.getMessage());
+            e.setSentenciaSQL(dql);
+
+            throw e;
+        }
+        return listaLocations;
+    }
+
 }
