@@ -5,6 +5,7 @@
  */
 package cadhr;
 
+import pojoshr.ExcepcionHR;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -19,30 +20,60 @@ import pojoshr.*;
  * @author DAM209
  */
 public class CADHR {
+    
+    private Connection conexion;
+    
+    public CADHR() throws ExcepcionHR{
+        try {
+
+            System.out.println("Conexion");
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+
+        } catch (ClassNotFoundException ex) {
+            ExcepcionHR e = new ExcepcionHR();
+            e.setMensajeErrorBD(ex.getMessage());
+            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
+            throw e;
+        }
+    }
+    
+    private void conectarBD() throws ExcepcionHR {
+        try {
+            
+        conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
+        
+        }  catch (SQLException ex) {
+            ExcepcionHR e = new ExcepcionHR();
+            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
+            e.setCodigoErrorBD(ex.getErrorCode());
+            e.setMensajeErrorBD(ex.getMessage());
+            throw e;
+        }
+    }
 
     public Integer insertarRegion(Region region) {
         return null;
     }
 
+    /**
+     * Elimina un único registro de la tabla REGIONS
+     * @param regionId Identificador de región del registro que se desea eliminar
+     * @return Cantidad de registros eliminados
+     * @throws pojoshr.ExcepcionHR Se lanzará cuando se produzca un error de base de datos
+     * @author Adam Janah Benyoussef
+     * @version 1.0
+     * @since 11/12/2025 DD/MM/YYYY
+     */
     public Integer eliminarRegion(Integer regionId) throws ExcepcionHR {
         int registrosAfectados = 0;
         String dml = "";
         try {
-
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@192.168.1.209:1521:test", "HR", "kk");
+            conectarBD();
             Statement sentencia = conexion.createStatement();
             dml = "DELETE REGIONS WHERE region_id = " + regionId;
             registrosAfectados = sentencia.executeUpdate(dml);
             sentencia.close();
             conexion.close();
-
-        } catch (ClassNotFoundException ex) {
-            ExcepcionHR e = new ExcepcionHR();
-            e.setMensajeErrorBD(ex.getMessage());
-            e.setSentenciaSQL(dml);
-            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
-            throw e;
         } catch (SQLException ex) {
 
             ExcepcionHR e = new ExcepcionHR();
@@ -78,34 +109,10 @@ public class CADHR {
         return null;
     }
 
-    public Integer eliminarCountry(String countryId) {
-        int registrosAfectados = 0;
-        try {
-
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.1.209:1521:test", "HR", "kk");
-            Statement sentencia = conexion.createStatement();
-            String dml = "DELETE FROM countries WHERE country_id = " + countryId;
-            registrosAfectados = sentencia.executeUpdate(dml);
-            sentencia.close();
-            conexion.close();
-
-        } catch (ClassNotFoundException ex) {
-            System.out.println("Error - Clase no Encontrada: " + ex.getMessage());
-        } catch (SQLException ex) {
-            System.out.println("Error SQL: " + ex.getErrorCode() + " - " + ex.getMessage());
-        }
-
-        return registrosAfectados;
-    }
-
     public Integer modificarDepartment(Integer departmentId, Department department) throws ExcepcionHR {
         int registrosAfectados = 0;
         String dml = "UPDATE departments SET department_name=?, manager_id=?, location_id=? WHERE department_id=?";
         try {
-
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
 
             PreparedStatement sentenciaPreparada = conexion.prepareStatement(dml);
 
@@ -118,12 +125,6 @@ public class CADHR {
             sentenciaPreparada.close();
             conexion.close();
 
-        } catch (ClassNotFoundException ex) {
-            ExcepcionHR e = new ExcepcionHR();
-            e.setMensajeErrorBD(ex.getMessage());
-            e.setSentenciaSQL(dml);
-            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
-            throw e;
         } catch (SQLException ex) {
 
             ExcepcionHR e = new ExcepcionHR();
@@ -150,6 +151,16 @@ public class CADHR {
         return registrosAfectados;
     }
 
+
+    
+    /**
+     * 
+     * @return Un ArrayList de tipo Location
+     * @throws ExcepcionHR
+     * @author Adam Janah Benyoussef
+     * @version 1.0
+     * @since 11/12/2025
+     */
     public ArrayList<Location> leerLocations() throws ExcepcionHR {
         ArrayList listaLocations = new ArrayList();
         Location l;
@@ -157,11 +168,7 @@ public class CADHR {
         Region r;
         String dql = "SELECT * FROM regions r, countries c, locations l WHERE r.region_id = c.region_id and c.country_id = l.country_id";
         try {
-
-            System.out.println("Conexion");
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            Connection conexion = DriverManager.getConnection("jdbc:oracle:thin:@172.16.209.1:1521:test", "HR", "kk");
-
+            conectarBD();
             Statement sentencia = conexion.createStatement();
 
             ResultSet resultado = sentencia.executeQuery(dql);
@@ -186,12 +193,6 @@ public class CADHR {
             sentencia.close();
             conexion.close();
 
-        } catch (ClassNotFoundException ex) {
-            ExcepcionHR e = new ExcepcionHR();
-            e.setMensajeErrorBD(ex.getMessage());
-            e.setSentenciaSQL(dql);
-            e.setMensajeErrorUsuario("Error general del sistema. Consulte con el administrador");
-            throw e;
         } catch (SQLException ex) {
 
             ExcepcionHR e = new ExcepcionHR();

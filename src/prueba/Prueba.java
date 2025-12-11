@@ -6,7 +6,7 @@
 package prueba;
 
 import cadhr.CADHR;
-import cadhr.ExcepcionHR;
+import pojoshr.ExcepcionHR;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,7 +19,9 @@ import pojoshr.*;
 public class Prueba {
 
     public static void main(String[] args) {
-        CADHR cad = new CADHR();
+        
+        
+
 
 //        int registrosAfectados = 0;
 //        try {
@@ -41,8 +43,12 @@ public class Prueba {
 //        }
 
         try {
-            ArrayList lista = cad.leerLocations();
-            System.out.println(lista);
+            CADHR cad = new CADHR();
+            
+            System.out.println(cad.leerLocations());
+            System.out.println(cad.leerLocations());
+            System.out.println(cad.leerLocations());
+            
         } catch (ExcepcionHR e) {
             System.out.println(e);
         }
